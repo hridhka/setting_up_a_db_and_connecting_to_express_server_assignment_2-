@@ -1,39 +1,35 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const User = require('./schema'); // Import User schema
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const User = require("./schema"); // Import the schema
+
+dotenv.config();
 
 const app = express();
-app.use(express.json());
+app.use(express.json()); // Ensure request body is parsed
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log("Connected to database"))
-    .catch(err => console.error("Error connecting to database", err));
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("Connected to database"))
+  .catch((err) => console.error("Error connecting to database:", err));
 
-// POST API to Create User
-app.post('/api/users', async (req, res) => {
-    try {
-        const { name, email, age } = req.body;
+app.post("/api/users", async (req, res) => {
+  try {
+    const { name, email, password } = req.body; // Ensure these fields exist
 
-        // Validate input
-        if (!name || !email || !age) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        // Create and save new user
-        const newUser = new User({ name, email, age });
-        await newUser.save();
-
-        res.status(201).json({ message: "User created successfully" });
-    } catch (error) {
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ message: "Validation error", error: error.message });
-        }
-        res.status(500).json({ message: "Server error", error: error.message });
+    // Check for missing fields
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required." });
     }
+
+    const newUser = new User({ name, email, password });
+    await newUser.save();
+
+    res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    res.status(400).json({ message: "Validation error", error: error.message });
+  }
 });
 
-// Start the Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
